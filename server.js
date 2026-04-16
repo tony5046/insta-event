@@ -1080,6 +1080,12 @@ function loadAutoAccounts() {
     if (fs.existsSync(AUTO_ACCOUNTS_FILE)) {
       return JSON.parse(fs.readFileSync(AUTO_ACCOUNTS_FILE, 'utf8'));
     }
+    // Railway 등 클라우드: 환경변수에서 로드
+    if (process.env.AUTO_ACCOUNTS_JSON) {
+      const accounts = JSON.parse(process.env.AUTO_ACCOUNTS_JSON);
+      fs.writeFileSync(AUTO_ACCOUNTS_FILE, JSON.stringify(accounts, null, 2));
+      return accounts;
+    }
   } catch {}
   return [];
 }
