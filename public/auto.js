@@ -65,6 +65,75 @@ async function saveNewAccount() {
   }
 }
 
+// === 이미지 업로드/관리 ===
+async function loadImages() {
+  const { images } = await api('/api/auto/images');
+  $('imageCountBadge').textContent = images.length + '개';
+
+  if (!images.length) {
+    $('imageList').innerHTML = '<p style="color:#6e6e73;font-size:13px;">이미지가 없습니다. 위에서 업로드해주세요.</p>';
+    return;
+  }
+  const html = images.map(name => `
+    <div class="img-item">
+      <img src="/api/auto/images/preview/${encodeURIComponent(name)}" alt="${escapeHtml(name)}" loading="lazy">
+      <span class="img-name">${escapeHtml(name)}</span>
+      <button class="img-del" data-name="${escapeHtml(name)}" title="삭제">&times;</button>
+    </div>
+  `).join('');
+  $('imageList').innerHTML = html;
+
+  document.querySelectorAll('.img-del').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      if (!confirm(`${btn.dataset.name} 삭제할까요?`)) return;
+      await api('/api/auto/images/delete', { method: 'POST', body: { filename: btn.dataset.name } });
+      await loadImages();
+      await refreshAll();
+    };
+  });
+}
+
+function setupDropZone() {
+  const zone = $('dropZone');
+  const input = $('imageInput');
+
+  zone.onclick = () => input.click();
+
+  zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('dragover'); };
+  zone.ondragleave = () => zone.classList.remove('dragover');
+  zone.ondrop = (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    uploadFiles(e.dataTransfer.files);
+  };
+  input.onchange = () => { if (input.files.length) uploadFiles(input.files); };
+}
+
+async function uploadFiles(fileList) {
+  const files = Array.from(fileList).filter(f => /\.(jpe?g|png|webp)$/i.test(f.name));
+  if (!files.length) { setStatus('uploadProgress', '지원하지 않는 형식입니다 (jpg, png, webp만)', 'error'); return; }
+
+  setStatus('uploadProgress', `${files.length}개 업로드 중...`, '');
+  const formData = new FormData();
+  files.forEach(f => formData.append('images', f));
+
+  try {
+    const res = await fetch('/api/auto/images/upload', { method: 'POST', body: formData });
+    const result = await res.json();
+    if (result.success) {
+      setStatus('uploadProgress', `✅ ${result.uploaded}개 업로드 완료!`, 'ok');
+      $('imageInput').value = '';
+      await loadImages();
+      await refreshAll();
+    } else {
+      setStatus('uploadProgress', '❌ ' + (result.error || '업로드 실패'), 'error');
+    }
+  } catch (err) {
+    setStatus('uploadProgress', '❌ ' + err.message, 'error');
+  }
+}
+
 // === 설정 로드/저장 ===
 async function loadConfig() {
   const cfg = await api('/api/auto/config');
@@ -324,7 +393,9 @@ $('resetAllUsedBtn').onclick = async () => {
 // 초기 로드
 (async () => {
   try {
+    setupDropZone();
     await loadAccountList();
+    await loadImages();
     await loadConfig();
     await refreshAll();
   } catch (err) {

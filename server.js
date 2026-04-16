@@ -1247,6 +1247,60 @@ app.get('/api/auto/images', (req, res) => {
   }
 });
 
+// 이미지 업로드 (웹에서 드래그 앤 드롭)
+const autoImageUpload = multer({
+  dest: path.join(__dirname, 'auto-images-tmp'),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    if (/\.(jpe?g|png|webp)$/i.test(file.originalname)) cb(null, true);
+    else cb(new Error('jpg, png, webp만 허용'));
+  },
+});
+
+app.post('/api/auto/images/upload', autoImageUpload.array('images', 50), (req, res) => {
+  try {
+    const cfg = autoUpload.loadConfig();
+    const destFolder = cfg.imageFolder || autoUpload.IMAGE_FOLDER;
+    if (!fs.existsSync(destFolder)) fs.mkdirSync(destFolder, { recursive: true });
+
+    const results = [];
+    for (const file of (req.files || [])) {
+      const dest = path.join(destFolder, file.originalname);
+      fs.renameSync(file.path, dest);
+      results.push(file.originalname);
+    }
+    res.json({ success: true, uploaded: results.length, files: results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 이미지 삭제
+app.post('/api/auto/images/delete', (req, res) => {
+  try {
+    const { filename } = req.body;
+    if (!filename) return res.status(400).json({ error: '파일명 필요' });
+    const cfg = autoUpload.loadConfig();
+    const filePath = path.join(cfg.imageFolder || autoUpload.IMAGE_FOLDER, filename);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 이미지 미리보기 (썸네일)
+app.get('/api/auto/images/preview/:filename', (req, res) => {
+  try {
+    const cfg = autoUpload.loadConfig();
+    const filePath = path.join(cfg.imageFolder || autoUpload.IMAGE_FOLDER, req.params.filename);
+    if (!fs.existsSync(filePath)) return res.status(404).send('not found');
+    res.sendFile(filePath);
+  } catch (err) {
+    res.status(500).send('error');
+  }
+});
+
 // 이미지 폴더 열기 (Windows 탐색기)
 app.post('/api/auto/open-folder', (req, res) => {
   try {

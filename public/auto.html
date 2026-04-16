@@ -69,6 +69,23 @@
       <p id="accountCountText" class="hint" style="margin-top:8px;"></p>
     </section>
 
+    <!-- 이미지 업로드 -->
+    <section class="card">
+      <h2>🖼️ 이미지 관리</h2>
+      <p class="hint">여기에 이미지를 올리면 자동 업로드에 사용됩니다. (jpg, png, webp)</p>
+
+      <div id="dropZone" class="drop-zone">
+        <p>📁 이미지를 여기에 드래그하거나 클릭해서 선택</p>
+        <input type="file" id="imageInput" multiple accept="image/jpeg,image/png,image/webp" style="display:none;">
+      </div>
+      <div id="uploadProgress" class="status"></div>
+
+      <div style="margin-top:12px;">
+        <span id="imageCountBadge" class="tag ok">0개</span> 이미지 등록됨
+      </div>
+      <div id="imageList" class="image-grid" style="margin-top:12px;"></div>
+    </section>
+
     <!-- 스케줄러 상태 -->
     <section class="card">
       <h2>⚙️ 스케줄러 설정</h2>
