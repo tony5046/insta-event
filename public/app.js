@@ -767,7 +767,17 @@ function updateAccountBadge() {
   if (uploadAccountNameEl) uploadAccountNameEl.textContent = display;
 }
 
-accountSelect.addEventListener('change', updateAccountBadge);
+accountSelect.addEventListener('change', () => {
+  updateAccountBadge();
+  // 선택된 계정의 쿠키에서 sessionId 자동 추출
+  const acc = accountsData.find(a => a.username === accountSelect.value);
+  if (acc && acc.cookies) {
+    const m = acc.cookies.match(/sessionid=([^;]+)/);
+    if (m) {
+      sessionIdInput.value = m[1];
+    }
+  }
+});
 
 // 계정 등록 폼 토글
 toggleAccountBtn.addEventListener('click', () => {
