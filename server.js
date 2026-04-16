@@ -8,7 +8,7 @@ const autoUpload = require('./auto-upload');
 const rotation = require('./auto-upload/rotation');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // 파일 업로드 설정
 const upload = multer({ dest: path.join(__dirname, 'uploads/') });
@@ -28,6 +28,10 @@ function loadSharedConfig() {
   try {
     if (fs.existsSync(SHARED_CONFIG_FILE)) {
       return JSON.parse(fs.readFileSync(SHARED_CONFIG_FILE, 'utf8'));
+    }
+    // Railway 등 클라우드: 환경변수에서 로드
+    if (process.env.SHARED_CONFIG_JSON) {
+      return JSON.parse(process.env.SHARED_CONFIG_JSON);
     }
   } catch {}
   return { sessionId: '', scriptUrl: '' };
@@ -829,6 +833,13 @@ function loadAccounts() {
   try {
     if (fs.existsSync(ACCOUNTS_FILE)) {
       return JSON.parse(fs.readFileSync(ACCOUNTS_FILE, 'utf8'));
+    }
+    // Railway 등 클라우드: 환경변수에서 초기 데이터 로드
+    if (process.env.ACCOUNTS_JSON) {
+      const accounts = JSON.parse(process.env.ACCOUNTS_JSON);
+      // 파일로 저장해서 이후 수정 가능하게
+      fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2));
+      return accounts;
     }
   } catch {}
   return [];
