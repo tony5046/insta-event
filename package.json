@@ -1,0 +1,17 @@
+{
+  "name": "insta-event",
+  "version": "1.0.0",
+  "description": "인스타그램 이벤트 당첨자 추첨 도구",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "googleapis": "^171.4.0",
+    "instagram-private-api": "^1.46.1",
+    "multer": "^2.1.1",
+    "node-cron": "^3.0.3"
+  }
+}

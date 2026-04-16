@@ -1,0 +1,122 @@
+/* auto.html 전용 스타일 */
+
+.link {
+  color: #0095f6;
+  text-decoration: none;
+  font-size: 14px;
+}
+.link:hover { text-decoration: underline; }
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.config-grid .form-group { margin: 0; }
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.form-group.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.form-group.inline label { margin: 0; white-space: nowrap; }
+
+.today-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  background: #f5f5f7;
+  border-radius: 8px;
+}
+.today-info .item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.today-info .label {
+  font-size: 12px;
+  color: #6e6e73;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.today-info .value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+.today-info .value.skip { color: #e8453c; }
+.today-info .value.ok { color: #34c759; }
+
+.usage-table, .preview-table, .history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 12px;
+}
+.usage-table th, .usage-table td,
+.preview-table th, .preview-table td,
+.history-table th, .history-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #e5e5ea;
+}
+.usage-table thead, .preview-table thead, .history-table thead {
+  background: #f5f5f7;
+  font-weight: 600;
+  color: #6e6e73;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.usage-table tr:hover, .preview-table tr:hover, .history-table tr:hover {
+  background: #fafafa;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.tag.feed { background: #e3f2fd; color: #0277bd; }
+.tag.story { background: #fce4ec; color: #c2185b; }
+.tag.skip { background: #fff3e0; color: #e65100; }
+.tag.fail { background: #ffebee; color: #c62828; }
+.tag.ok { background: #e8f5e9; color: #2e7d32; }
+
+code {
+  background: #f5f5f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SFMono-Regular', 'Monaco', monospace;
+  font-size: 13px;
+}
+
+.progress-bar-mini {
+  display: inline-block;
+  width: 80px;
+  height: 6px;
+  background: #e5e5ea;
+  border-radius: 3px;
+  vertical-align: middle;
+  overflow: hidden;
+}
+.progress-bar-mini > div {
+  height: 100%;
+  background: #0095f6;
+  transition: width .2s;
+}
+
+@media (max-width: 640px) {
+  .config-grid { grid-template-columns: 1fr; }
+}

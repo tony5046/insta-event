@@ -1,0 +1,10 @@
+node_modules/
+uploads/
+.claude/
+state.json
+auto-config.json
+accounts.json
+auto-accounts.json
+shared-config.json
+auto-images/
+*.output

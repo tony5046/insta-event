@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>인스타 이벤트 당첨자 추첨</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>인스타 이벤트 당첨자 추첨</h1>
+      <p class="subtitle">Instagram 게시물 댓글에서 당첨자를 자동으로 추첨합니다</p>
+    </header>
+
+    <!-- 1단계: Instagram 계정 선택 (이후 모든 작업의 기준) -->
+    <section class="card">
+      <h2>1. Instagram 계정 선택</h2>
+      <p class="hint" style="margin-bottom:12px;">
+        선택한 계정이 <strong>팔로워 검증 · 시트 탭 · 게시물 업로드</strong>의 기준이 됩니다.
+      </p>
+
+      <div class="form-group">
+        <label>계정</label>
+        <div class="account-area">
+          <select id="accountSelect" class="select-input">
+            <option value="">-- 계정 선택 --</option>
+          </select>
+          <span id="loginStatusBadge" class="login-badge logged-out">미등록</span>
+        </div>
+        <div id="accountForm" class="account-form" style="display:none;">
+          <div class="form-group">
+            <label for="igUsername">계정 아이디</label>
+            <input type="text" id="igUsername" placeholder="예: gg_namme">
+          </div>
+          <div class="form-group">
+            <label for="igLabel">별칭 (선택)</label>
+            <input type="text" id="igLabel" placeholder="예: 달빛언니팀 계정">
+          </div>
+          <div class="form-group">
+            <label for="igInfluencer">셀러 본 계정 아이디 (팔로워 검증용)</label>
+            <input type="text" id="igInfluencer" placeholder="예: moonlight.living">
+            <p class="hint">팔로워 검증 시 이 계정의 팔로워 목록을 조회합니다.</p>
+          </div>
+          <div class="form-group">
+            <label for="igCookies">쿠키 전체 복사</label>
+            <textarea id="igCookies" rows="3" placeholder="크롬 F12 > Network 탭 > instagram.com 아무 요청 클릭 > Headers > Cookie 값 전체 복사"></textarea>
+            <p class="hint">방법: F12 > Network 탭 > 새로고침 > 아무 요청 클릭 > Request Headers에서 "Cookie:" 값 전체를 복사</p>
+          </div>
+          <button id="saveAccountBtn" class="btn btn-primary btn-sm">계정 저장</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button id="toggleAccountBtn" class="btn btn-secondary btn-sm">+ 계정 등록</button>
+          <button id="deleteAccountBtn" class="btn btn-secondary btn-sm" style="color:#e8453c;">계정 삭제</button>
+        </div>
+        <p id="loginStatus" class="status"></p>
+      </div>
+    </section>
+
+    <!-- 2단계: 댓글 입력 -->
+    <section class="card">
+      <h2>2. 댓글 입력</h2>
+      <div class="tab-group">
+        <button class="tab active" data-tab="api">API 모드 (서버 필요)</button>
+        <button class="tab" data-tab="paste">붙여넣기 모드</button>
+      </div>
+
+      <!-- API 모드 -->
+      <div id="apiMode" class="tab-content active">
+        <div class="form-group">
+          <label for="sessionId">Instagram 세션 ID</label>
+          <div class="input-row">
+            <input type="password" id="sessionId" placeholder="크롬 F12 > Application > Cookies > sessionid 값">
+            <button id="toggleSession" class="btn-icon" title="보기/숨기기">👁</button>
+          </div>
+          <label class="checkbox-label">
+            <input type="checkbox" id="saveSession"> 세션 ID 로컬 저장
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="postUrl">게시물 URL</label>
+          <input type="text" id="postUrl" placeholder="https://www.instagram.com/p/... 또는 /reel/...">
+        </div>
+        <button id="fetchBtn" class="btn btn-primary">댓글 불러오기</button>
+        <p class="hint">* npm install && npm start 로 서버 실행 후 사용</p>
+      </div>
+
+      <!-- 붙여넣기 모드 -->
+      <div id="pasteMode" class="tab-content">
+        <div class="form-group">
+          <label for="pasteInput">댓글 목록 붙여넣기</label>
+          <textarea id="pasteInput" rows="10" placeholder="한 줄에 하나씩 입력&#10;&#10;형식 1: @아이디 댓글내용&#10;형식 2: 아이디&#10;형식 3: 아이디 (탭) 댓글내용"></textarea>
+        </div>
+        <button id="parseBtn" class="btn btn-primary">댓글 파싱하기</button>
+      </div>
+
+      <div id="fetchStatus" class="status"></div>
+
+      <!-- 진행률 바 -->
+      <div id="progressSection" class="progress-section" style="display:none;">
+        <div class="progress-bar-wrap">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <p id="progressText" class="progress-text">수집 준비 중...</p>
+      </div>
+    </section>
+
+    <!-- 3단계: 추첨 옵션 -->
+    <section class="card" id="drawSection" style="display:none;">
+      <h2>3. 추첨 옵션</h2>
+
+      <div class="form-group">
+        <label for="marketName">진행 마켓명</label>
+        <input type="text" id="marketName" placeholder="예: 토니노예 3월 이벤트">
+      </div>
+
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-number" id="totalComments">0</span>
+          <span class="stat-label">전체 댓글</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="uniqueUsers">0</span>
+          <span class="stat-label">참여자 수</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="keyword">키워드 필터 (선택)</label>
+        <input type="text" id="keyword" placeholder="특정 키워드가 포함된 댓글만 추첨">
+      </div>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="removeDuplicates" checked> 중복 제거 (유저당 1회)
+      </label>
+
+      <!-- 1차 검증 -->
+      <div class="verify-section">
+        <h3>1차 검증</h3>
+        <p class="hint" id="verifySellerHint" style="margin-bottom:12px;">
+          검증 기준 계정: <strong id="verifySellerName">(1단계에서 계정을 선택하세요)</strong>
+        </p>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="verifyFollower"> 팔로워 필수 검증 (선택한 계정을 팔로우하지 않는 당첨자 자동 제외)
+        </label>
+
+        <div class="form-group" style="margin-top:12px;">
+          <label class="checkbox-label" style="margin-top:0;">
+            <input type="checkbox" id="excludeRecent"> 최근 당첨자 제외 (시트 기반)
+          </label>
+          <div class="recent-row" style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+            <label for="excludeDays" style="font-size:13px; color:#6e6e73; margin:0;">기간</label>
+            <select id="excludeDays" class="select-input" style="flex:0 0 120px;">
+              <option value="30">30일</option>
+              <option value="60">60일</option>
+              <option value="90">90일</option>
+            </select>
+            <span id="recentCountBadge" class="badge" style="background:#86868b;">미조회</span>
+          </div>
+          <p class="hint">※ 해당 계정의 시트 탭에서 "추첨일자" 기준으로 최근 N일 이내 당첨자를 제외합니다.</p>
+        </div>
+      </div>
+
+      <!-- 증정품 설정 -->
+      <div class="prize-section">
+        <h3>증정품 설정</h3>
+        <p class="hint">각 증정품과 수량을 입력하세요. 당첨자가 순서대로 배정됩니다.</p>
+        <div id="prizeList" class="prize-list">
+          <div class="prize-row" data-index="0">
+            <input type="text" class="prize-name" placeholder="증정품명 (예: 립밤)">
+            <input type="number" class="prize-count" placeholder="수량" value="1" min="1">
+            <button class="btn-icon prize-remove" title="삭제">&times;</button>
+          </div>
+        </div>
+        <button id="addPrizeBtn" class="btn btn-secondary btn-sm">+ 증정품 추가</button>
+        <p class="prize-total">총 당첨자: <strong id="totalWinners">1</strong>명</p>
+      </div>
+
+      <button id="drawBtn" class="btn btn-accent">추첨하기</button>
+    </section>
+
+    <!-- 4단계: 결과 -->
+    <section class="card" id="resultSection" style="display:none;">
+      <h2>4. 당첨 결과</h2>
+      <div id="winnerList" class="winner-list"></div>
+      <div class="result-actions">
+        <button id="copyBtn" class="btn btn-secondary">아이디 복사</button>
+        <button id="copyFullBtn" class="btn btn-secondary">전체 복사</button>
+        <button id="redrawBtn" class="btn btn-outline">다시 추첨</button>
+      </div>
+
+      <!-- Google Sheets 저장 -->
+      <div class="sheets-section">
+        <h3>Google Sheets 저장</h3>
+        <div class="form-group">
+          <label for="scriptUrl">Apps Script 웹 앱 URL</label>
+          <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+          <label class="checkbox-label">
+            <input type="checkbox" id="saveScriptUrl"> URL 로컬 저장
+          </label>
+        </div>
+        <button id="saveToSheetBtn" class="btn btn-sheets">Google Sheets에 저장</button>
+        <p id="sheetStatus" class="status"></p>
+      </div>
+    </section>
+
+    <!-- 댓글 목록 -->
+    <section class="card" id="commentSection" style="display:none;">
+      <h2>전체 댓글 목록 <span id="commentCount" class="badge"></span></h2>
+      <div id="commentList" class="comment-list"></div>
+    </section>
+
+    <!-- 5단계: Instagram 게시물 업로드 -->
+    <section class="card" id="postSection" style="display:none;">
+      <h2>5. 당첨자 발표 게시물 업로드</h2>
+      <p class="hint" style="margin-bottom:12px;">
+        업로드 계정: <strong id="uploadAccountName">(1단계에서 선택한 계정)</strong>
+      </p>
+
+      <!-- 캡션 설정 -->
+      <div class="form-group">
+        <label>캡션 설정</label>
+        <div class="caption-fields">
+          <div class="form-group">
+            <label for="captionTitle">제목 (마켓명 + 이벤트 설명)</label>
+            <input type="text" id="captionTitle" placeholder="예: 테코야 이벤트">
+          </div>
+          <div class="form-group">
+            <label for="captionDeadline">DM 답변 기한</label>
+            <input type="text" id="captionDeadline" placeholder="예: 4월 20일">
+          </div>
+        </div>
+        <p class="hint">증정품/당첨자는 추첨 결과에서 자동으로 채워집니다.</p>
+      </div>
+
+      <!-- 캡션 미리보기 -->
+      <div class="form-group">
+        <label>캡션 미리보기</label>
+        <div id="captionPreview" class="caption-preview"></div>
+        <button id="refreshCaptionBtn" class="btn btn-secondary btn-sm">미리보기 새로고침</button>
+        <button id="copyCaptionBtn" class="btn btn-secondary btn-sm">캡션 복사</button>
+      </div>
+
+      <!-- 이미지 업로드 -->
+      <div class="form-group">
+        <label for="postImage">게시물 이미지</label>
+        <input type="file" id="postImage" accept="image/*" class="file-input">
+        <div id="imagePreview" class="image-preview"></div>
+      </div>
+
+      <button id="publishBtn" class="btn btn-accent">Instagram에 게시하기</button>
+      <p id="publishStatus" class="status"></p>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
