@@ -7,10 +7,12 @@ const cron = require('node-cron');
 const rotation = require('./rotation');
 const uploader = require('./ig-uploader');
 
-const IMAGE_FOLDER = path.join(__dirname, '..', 'auto-images');
-const CONFIG_FILE = path.join(__dirname, '..', 'auto-config.json');
+const dataPath = require('../data-path');
+
+const IMAGE_FOLDER = dataPath.IMAGE_DIR;
+const CONFIG_FILE = dataPath.resolve('auto-config.json');
 // 자동 업로드 전용 계정 파일 (이벤트 추첨 계정과 별도)
-const ACCOUNTS_FILE = path.join(__dirname, '..', 'auto-accounts.json');
+const ACCOUNTS_FILE = dataPath.resolve('auto-accounts.json');
 
 // 기본 설정
 function defaultConfig() {

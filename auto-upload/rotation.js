@@ -5,8 +5,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const dataPath = require('../data-path');
 
-const STATE_FILE = path.join(__dirname, '..', 'state.json');
+// 상태 파일은 Railway Volume에 저장 (영구), holidays는 코드와 함께 (루트)
+const STATE_FILE = dataPath.resolve('state.json');
 const HOLIDAYS_FILE = path.join(__dirname, '..', 'holidays.json');
 
 // 기본 상태 구조

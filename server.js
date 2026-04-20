@@ -6,6 +6,10 @@ const { IgApiClient } = require('instagram-private-api');
 const multer = require('multer');
 const autoUpload = require('./auto-upload');
 const rotation = require('./auto-upload/rotation');
+const dataPath = require('./data-path');
+
+// 서버 시작 시 기존 데이터 파일들을 Volume으로 마이그레이션 (Volume 사용 시)
+dataPath.migrateAll();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -827,7 +831,7 @@ app.post('/api/sheets', async (req, res) => {
 // === Instagram 게시물 업로드 API (쿠키 기반) ===
 
 // 계정 목록 저장/불러오기
-const ACCOUNTS_FILE = path.join(__dirname, 'accounts.json');
+const ACCOUNTS_FILE = dataPath.resolve('accounts.json');
 
 function loadAccounts() {
   try {
@@ -1073,7 +1077,7 @@ function igConfigurePost(uploadId, caption, cookies, csrfToken) {
 // ============================================================
 
 // === 자동 업로드 전용 계정 관리 (이벤트 추첨 계정과 별도) ===
-const AUTO_ACCOUNTS_FILE = path.join(__dirname, 'auto-accounts.json');
+const AUTO_ACCOUNTS_FILE = dataPath.resolve('auto-accounts.json');
 
 function loadAutoAccounts() {
   try {
@@ -1249,7 +1253,7 @@ app.get('/api/auto/images', (req, res) => {
 
 // 이미지 업로드 (웹에서 드래그 앤 드롭)
 const autoImageUpload = multer({
-  dest: path.join(__dirname, 'auto-images-tmp'),
+  dest: dataPath.resolve('auto-images-tmp'),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
     if (/\.(jpe?g|png|webp)$/i.test(file.originalname)) cb(null, true);

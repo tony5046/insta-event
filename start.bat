@@ -1,28 +1,59 @@
 @echo off
-chcp 65001 >nul
-echo ========================================
-echo   인스타 이벤트 서버 + ngrok 시작
-echo ========================================
-echo.
-
+chcp 65001 > nul
+title Insta Auto Upload Server
 cd /d "%~dp0"
 
-:: 서버 시작 (백그라운드)
-start "insta-event-server" /min cmd /c "node server.js"
-echo [1/2] 서버 시작 완료 (localhost:3000)
+echo.
+echo ========================================
+echo   Insta Auto Upload Server
+echo ========================================
+echo.
 
-:: 잠시 대기 후 ngrok 시작
-timeout /t 2 /nobreak >nul
-start "ngrok" /min cmd /c "ngrok http 3000"
-echo [2/2] ngrok 시작 완료
+:: Node.js check
+where node >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Node.js is not installed.
+    echo Please install from https://nodejs.org/
+    pause
+    exit /b 1
+)
+
+:: node_modules check
+if not exist "node_modules" (
+    echo [INFO] Installing packages...
+    call npm install
+    if errorlevel 1 (
+        echo [ERROR] npm install failed.
+        pause
+        exit /b 1
+    )
+)
+
+:: Kill existing process on port 3000
+echo [INFO] Checking for existing server...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr "LISTENING" ^| findstr ":3000 "') do (
+    echo [INFO] Killing old server (PID %%a)...
+    taskkill /F /PID %%a >nul 2>&1
+    timeout /t 2 /nobreak >nul
+)
 
 echo.
 echo ========================================
-echo   모두 시작되었습니다!
-echo   - 로컬: http://localhost:3000
-echo   - 외부: ngrok 창에서 URL 확인
+echo   Server starting...
 echo ========================================
 echo.
-echo 이 창을 닫아도 서버는 계속 실행됩니다.
-echo 종료하려면 작업표시줄에서 서버/ngrok 창을 닫으세요.
+echo   DO NOT CLOSE THIS WINDOW!
+echo.
+echo   Open in browser:
+echo     http://localhost:3000/auto.html
+echo.
+echo ========================================
+echo.
+
+node server.js
+
+echo.
+echo ========================================
+echo   Server stopped.
+echo ========================================
 pause
