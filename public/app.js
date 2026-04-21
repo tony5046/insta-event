@@ -879,7 +879,7 @@ function generateCaption() {
   caption += `앞으로도 더 좋은 마켓으로 찾아뵙겠습니다 🤍\n`;
   caption += `감사합니다.`;
 
-  captionPreview.textContent = caption;
+  captionPreview.value = caption;
   return caption;
 }
 
@@ -889,7 +889,7 @@ captionDeadline.addEventListener('input', generateCaption);
 refreshCaptionBtn.addEventListener('click', generateCaption);
 
 copyCaptionBtn.addEventListener('click', () => {
-  const text = captionPreview.textContent;
+  const text = captionPreview.value;
   copyToClipboard(text);
 });
 
@@ -910,7 +910,7 @@ postImageInput.addEventListener('change', () => {
 // 게시물 업로드
 publishBtn.addEventListener('click', async () => {
   const username = accountSelect.value;
-  const caption = captionPreview.textContent;
+  const caption = captionPreview.value;
   const imageFile = postImageInput.files[0];
 
   if (!username) {

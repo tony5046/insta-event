@@ -625,9 +625,19 @@ textarea:focus {
   line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 400px;
+  min-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
   margin-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  resize: vertical;
+}
+.caption-preview:focus {
+  outline: none;
+  border-color: #4a90e2;
+  background: #fff;
 }
 
 .file-input {
