@@ -6,6 +6,7 @@ const path = require('path');
 const cron = require('node-cron');
 const rotation = require('./rotation');
 const uploader = require('./ig-uploader');
+const keepAlive = require('./keep-alive');
 
 const dataPath = require('../data-path');
 
@@ -219,6 +220,7 @@ async function runAutoUpload({ forceRun = false } = {}) {
 
 // === 스케줄러 ===
 let currentCronJob = null;
+let keepAliveCronJob = null;
 
 function startScheduler() {
   const cfg = loadConfig();
@@ -245,6 +247,19 @@ function startScheduler() {
   });
 
   console.log(`[scheduler] 스케줄 등록: ${cfg.cronExpression} (Asia/Seoul)`);
+
+  // Keep-Alive: 하루 3회 (9시, 15시, 21시)
+  if (keepAliveCronJob) { keepAliveCronJob.stop(); keepAliveCronJob = null; }
+  keepAliveCronJob = cron.schedule('0 9,15,21 * * *', async () => {
+    console.log(`\n[keep-alive] ${new Date().toISOString()} 정기 실행`);
+    try {
+      await keepAlive.runKeepAlive();
+    } catch (err) {
+      console.error('[keep-alive] 실행 오류:', err.message);
+    }
+  }, { timezone: 'Asia/Seoul' });
+  console.log(`[keep-alive] 스케줄 등록: 9시, 15시, 21시 (Asia/Seoul)`);
+
   return true;
 }
 
@@ -295,5 +310,6 @@ module.exports = {
   saveConfig,
   previewSchedule,
   scanImages,
+  runKeepAlive: keepAlive.runKeepAlive,
   IMAGE_FOLDER,
 };

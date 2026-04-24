@@ -16,17 +16,45 @@ async function api(url, opts = {}) {
 }
 
 // === 계정 관리 ===
+function fmtRelTime(iso) {
+  if (!iso) return '<span style="color:#999;">아직 없음</span>';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return '방금 전';
+  if (min < 60) return min + '분 전';
+  const h = Math.floor(min / 60);
+  if (h < 24) return h + '시간 전';
+  const d = Math.floor(h / 24);
+  return d + '일 전';
+}
+
 async function loadAccountList() {
   const accounts = await api('/api/auto/accounts');
-  const rows = accounts.map(a => `
+  const rows = accounts.map(a => {
+    let cookieStatus = '<span class="tag fail">없음</span>';
+    if (a.hasCookies) {
+      if (a.lastKeepAliveError === 'login_required') {
+        cookieStatus = '<span class="tag fail">만료됨</span>';
+      } else if (a.lastKeepAliveStatus === 200) {
+        cookieStatus = '<span class="tag ok">활성</span>';
+      } else {
+        cookieStatus = '<span class="tag ok">등록됨</span>';
+      }
+    }
+    const lastActive = a.lastKeepAliveAt
+      ? fmtRelTime(a.lastKeepAliveAt) + (a.lastCookieRefreshAt ? ' <span style="color:#0095f6;font-size:10px;">🔄갱신</span>' : '')
+      : '<span style="color:#999;font-size:11px;">미확인</span>';
+    return `
     <tr>
       <td>${a.index}</td>
       <td>@${escapeHtml(a.username)}</td>
       <td>${escapeHtml(a.label)}</td>
-      <td>${a.hasCookies ? '<span class="tag ok">등록됨</span>' : '<span class="tag fail">없음</span>'}</td>
+      <td>${cookieStatus}</td>
+      <td style="font-size:12px;">${lastActive}</td>
       <td><button class="btn btn-outline btn-sm del-acc-btn" data-user="${escapeHtml(a.username)}">삭제</button></td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
   $('accountListBody').innerHTML = rows || `<tr><td colspan="5" style="text-align:center;color:#6e6e73;">등록된 계정이 없습니다.</td></tr>`;
   $('accountCountText').textContent = `총 ${accounts.length}개 계정 등록됨 (최소 2개 필요)`;
 
@@ -373,6 +401,24 @@ $('cancelAccountBtn').onclick = () => {
   $('addAccountBtn').style.display = '';
 };
 $('saveNewAccountBtn').onclick = saveNewAccount;
+
+// Keep-Alive 수동 실행
+$('keepAliveBtn').onclick = async () => {
+  if (!confirm('모든 계정의 쿠키를 지금 갱신하시겠습니까?\n(20개 계정 기준 1분 정도 소요)')) return;
+  const btn = $('keepAliveBtn');
+  btn.disabled = true;
+  btn.textContent = '실행 중...';
+  try {
+    const result = await api('/api/auto/keep-alive', { method: 'POST' });
+    alert(`✅ 완료!\n\n검사: ${result.total}개\n쿠키 갱신: ${result.refreshed}개\n만료: ${result.expired}개`);
+    await loadAccountList();
+  } catch (err) {
+    alert('❌ ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 쿠키 지금 갱신 (Keep-Alive)';
+  }
+};
 
 $('saveConfigBtn').onclick = saveConfig;
 $('runNowBtn').onclick = runNow;

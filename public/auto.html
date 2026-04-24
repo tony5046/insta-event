@@ -51,7 +51,11 @@
         <p id="accountSaveStatus" class="status"></p>
       </div>
 
-      <button id="addAccountBtn" class="btn btn-secondary">+ 계정 추가</button>
+      <div class="btn-row">
+        <button id="addAccountBtn" class="btn btn-secondary">+ 계정 추가</button>
+        <button id="keepAliveBtn" class="btn btn-outline">🔄 쿠키 지금 갱신 (Keep-Alive)</button>
+      </div>
+      <p class="hint" style="margin-top:6px;">자동 Keep-Alive: 매일 오전 9시, 오후 3시, 오후 9시 (쿠키 자동 연장)</p>
 
       <!-- 등록된 계정 목록 -->
       <table class="usage-table" style="margin-top:12px;">
@@ -60,7 +64,8 @@
             <th>#</th>
             <th>아이디</th>
             <th>별칭</th>
-            <th>쿠키</th>
+            <th>쿠키 상태</th>
+            <th>최근 활성화</th>
             <th>삭제</th>
           </tr>
         </thead>

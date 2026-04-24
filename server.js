@@ -1107,8 +1107,22 @@ app.get('/api/auto/accounts', (req, res) => {
     label: a.label || '',
     hasCookies: !!a.cookies,
     cookiePreview: a.cookies ? a.cookies.substring(0, 30) + '...' : '(없음)',
+    lastKeepAliveAt: a.lastKeepAliveAt || null,
+    lastKeepAliveStatus: a.lastKeepAliveStatus || null,
+    lastCookieRefreshAt: a.lastCookieRefreshAt || null,
+    lastKeepAliveError: a.lastKeepAliveError || null,
   }));
   res.json(safe);
+});
+
+// Keep-Alive 수동 실행
+app.post('/api/auto/keep-alive', async (req, res) => {
+  try {
+    const result = await autoUpload.runKeepAlive();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/auto/accounts/save', (req, res) => {
