@@ -1125,6 +1125,112 @@ app.post('/api/auto/keep-alive', async (req, res) => {
   }
 });
 
+// 서버 측 자동 로그인 (IP 일치를 위해 Railway에서 직접 인스타 로그인)
+app.post('/api/auto/login', async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ error: 'username/password 필요' });
+    }
+
+    const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+
+    // Step 1: csrftoken 얻기
+    const initialCookies = await new Promise((resolve, reject) => {
+      const r = https.request({
+        hostname: 'www.instagram.com', path: '/accounts/login/', method: 'GET',
+        headers: { 'User-Agent': USER_AGENT, 'Accept': 'text/html' },
+      }, (resp) => {
+        const sc = resp.headers['set-cookie'] || [];
+        const cookies = {};
+        for (const c of sc) {
+          const f = c.split(';')[0];
+          const eq = f.indexOf('=');
+          if (eq > 0) cookies[f.substring(0, eq).trim()] = f.substring(eq + 1).trim();
+        }
+        resp.resume();
+        resp.on('end', () => resolve(cookies));
+      });
+      r.on('error', reject);
+      r.setTimeout(15000, () => r.destroy(new Error('timeout')));
+      r.end();
+    });
+
+    if (!initialCookies.csrftoken) {
+      return res.status(500).json({ error: 'csrftoken 받기 실패' });
+    }
+
+    // Step 2: 로그인
+    const loginResult = await new Promise((resolve, reject) => {
+      const ts = Math.floor(Date.now() / 1000);
+      const body = new URLSearchParams({
+        username, enc_password: `#PWD_INSTAGRAM_BROWSER:0:${ts}:${password}`,
+        queryParams: '{}', optIntoOneTap: 'false', trustedDeviceRecords: '{}',
+      }).toString();
+      const cookieHeader = Object.entries(initialCookies).map(([k, v]) => `${k}=${v}`).join('; ');
+      const r = https.request({
+        hostname: 'www.instagram.com', path: '/api/v1/web/accounts/login/ajax/', method: 'POST',
+        headers: {
+          'User-Agent': USER_AGENT,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(body),
+          'Cookie': cookieHeader,
+          'X-CSRFToken': initialCookies.csrftoken,
+          'X-IG-App-ID': '936619743392459',
+          'X-Instagram-AJAX': '1',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://www.instagram.com',
+          'Referer': 'https://www.instagram.com/accounts/login/',
+          'Accept': '*/*',
+        },
+      }, (resp) => {
+        let data = '';
+        resp.on('data', c => data += c);
+        resp.on('end', () => {
+          const sc = resp.headers['set-cookie'] || [];
+          const cookies = { ...initialCookies };
+          for (const c of sc) {
+            const f = c.split(';')[0];
+            const eq = f.indexOf('=');
+            if (eq > 0) {
+              const k = f.substring(0, eq).trim();
+              const v = f.substring(eq + 1).trim();
+              if (v && v !== '""' && v.toLowerCase() !== 'deleted') cookies[k] = v;
+            }
+          }
+          try { resolve({ status: resp.statusCode, data: JSON.parse(data), cookies }); }
+          catch { resolve({ status: resp.statusCode, data: { raw: data.substring(0, 300) }, cookies }); }
+        });
+      });
+      r.on('error', reject);
+      r.setTimeout(20000, () => r.destroy(new Error('timeout')));
+      r.write(body);
+      r.end();
+    });
+
+    if (loginResult.data.authenticated) {
+      const cookieStr = Object.entries(loginResult.cookies).map(([k, v]) => `${k}=${v}`).join('; ');
+      // auto-accounts에 저장
+      const accounts = loadAutoAccounts();
+      const idx = accounts.findIndex(a => a.username === username);
+      const entry = { username, label: accounts[idx]?.label || '', cookies: cookieStr };
+      if (idx >= 0) accounts[idx] = entry; else accounts.push(entry);
+      saveAutoAccounts(accounts);
+      return res.json({ success: true, userId: loginResult.data.userId });
+    }
+    if (loginResult.data.two_factor_required) {
+      return res.json({ success: false, error: '2단계 인증 필요' });
+    }
+    return res.json({
+      success: false,
+      error: loginResult.data.message || loginResult.data.error_type || `실패 (${loginResult.status})`,
+      raw: loginResult.data,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/auto/accounts/save', (req, res) => {
   const { username, label, cookies } = req.body;
   if (!username || !cookies) {

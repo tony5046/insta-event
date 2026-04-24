@@ -248,9 +248,9 @@ function startScheduler() {
 
   console.log(`[scheduler] 스케줄 등록: ${cfg.cronExpression} (Asia/Seoul)`);
 
-  // Keep-Alive: 하루 3회 (9시, 15시, 21시)
+  // Keep-Alive: 하루 1회 (오전 8시) — 너무 자주 호출하면 인스타가 의심함
   if (keepAliveCronJob) { keepAliveCronJob.stop(); keepAliveCronJob = null; }
-  keepAliveCronJob = cron.schedule('0 9,15,21 * * *', async () => {
+  keepAliveCronJob = cron.schedule('0 8 * * *', async () => {
     console.log(`\n[keep-alive] ${new Date().toISOString()} 정기 실행`);
     try {
       await keepAlive.runKeepAlive();
@@ -258,7 +258,7 @@ function startScheduler() {
       console.error('[keep-alive] 실행 오류:', err.message);
     }
   }, { timezone: 'Asia/Seoul' });
-  console.log(`[keep-alive] 스케줄 등록: 9시, 15시, 21시 (Asia/Seoul)`);
+  console.log(`[keep-alive] 스케줄 등록: 매일 오전 8시 (Asia/Seoul)`);
 
   return true;
 }
