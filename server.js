@@ -1135,29 +1135,54 @@ app.post('/api/auto/login', async (req, res) => {
 
     const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
-    // Step 1: csrftoken 얻기
-    const initialCookies = await new Promise((resolve, reject) => {
-      const r = https.request({
-        hostname: 'www.instagram.com', path: '/accounts/login/', method: 'GET',
-        headers: { 'User-Agent': USER_AGENT, 'Accept': 'text/html' },
-      }, (resp) => {
-        const sc = resp.headers['set-cookie'] || [];
-        const cookies = {};
-        for (const c of sc) {
-          const f = c.split(';')[0];
-          const eq = f.indexOf('=');
-          if (eq > 0) cookies[f.substring(0, eq).trim()] = f.substring(eq + 1).trim();
-        }
-        resp.resume();
-        resp.on('end', () => resolve(cookies));
+    // Step 1: csrftoken 얻기 (여러 경로 시도)
+    async function tryGetCookies(pathUrl) {
+      return new Promise((resolve, reject) => {
+        const r = https.request({
+          hostname: 'www.instagram.com', path: pathUrl, method: 'GET',
+          headers: {
+            'User-Agent': USER_AGENT,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+          },
+        }, (resp) => {
+          const sc = resp.headers['set-cookie'] || [];
+          const cookies = {};
+          for (const c of sc) {
+            const f = c.split(';')[0];
+            const eq = f.indexOf('=');
+            if (eq > 0) cookies[f.substring(0, eq).trim()] = f.substring(eq + 1).trim();
+          }
+          let body = '';
+          resp.on('data', c => body += c);
+          resp.on('end', () => {
+            // HTML body에서 csrf_token 추출 (백업)
+            if (!cookies.csrftoken) {
+              const m = body.match(/"csrf_token":"([^"]+)"/);
+              if (m) cookies.csrftoken = m[1];
+            }
+            resolve({ cookies, status: resp.statusCode });
+          });
+        });
+        r.on('error', reject);
+        r.setTimeout(15000, () => r.destroy(new Error('timeout')));
+        r.end();
       });
-      r.on('error', reject);
-      r.setTimeout(15000, () => r.destroy(new Error('timeout')));
-      r.end();
-    });
+    }
+
+    let initialCookies = {};
+    for (const p of ['/', '/accounts/login/', '/api/v1/public/landing_info/']) {
+      try {
+        const r = await tryGetCookies(p);
+        Object.assign(initialCookies, r.cookies);
+        if (initialCookies.csrftoken) break;
+      } catch {}
+    }
 
     if (!initialCookies.csrftoken) {
-      return res.status(500).json({ error: 'csrftoken 받기 실패' });
+      return res.status(500).json({ error: 'csrftoken 받기 실패 (IP 차단 가능성)' });
     }
 
     // Step 2: 로그인
