@@ -13,15 +13,23 @@ const ACCOUNTS_FILE = dataPath.resolve('auto-accounts.json');
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 const IG_APP_ID = '936619743392459';
 
-// 현재 로그인 유저 조회 (가벼운 API) — 응답 Set-Cookie에서 갱신된 쿠키 회수
+// ds_user_id 추출 헬퍼
+function extractUserId(cookies) {
+  const m = cookies.match(/ds_user_id=([^;]+)/);
+  return m ? m[1] : '';
+}
+
+// 홈 피드 조회 (가장 안정적) — 응답 Set-Cookie에서 갱신된 쿠키 회수
 function pingAccount(cookies) {
   return new Promise((resolve) => {
     const csrfMatch = cookies.match(/csrftoken=([^;]+)/);
     const csrfToken = csrfMatch ? csrfMatch[1] : '';
+    const userId = extractUserId(cookies);
 
+    // user_id 기반 프로필 조회 (간단하고 안정적)
     const options = {
-      hostname: 'www.instagram.com',
-      path: '/api/v1/accounts/current_user/?edit=true',
+      hostname: 'i.instagram.com',
+      path: `/api/v1/users/${userId}/info/`,
       method: 'GET',
       headers: {
         'User-Agent': USER_AGENT,
@@ -30,10 +38,11 @@ function pingAccount(cookies) {
         'X-IG-App-ID': IG_APP_ID,
         'X-ASBD-ID': '129477',
         'X-Requested-With': 'XMLHttpRequest',
-        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-Site': 'same-site',
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Dest': 'empty',
         'Referer': 'https://www.instagram.com/',
+        'Origin': 'https://www.instagram.com',
         'Accept': '*/*',
       },
     };
