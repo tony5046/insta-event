@@ -8,3 +8,6 @@ auto-accounts.json
 shared-config.json
 auto-images/
 *.output
+tools/login-credentials.json
+*-credentials.json
+*.secret
