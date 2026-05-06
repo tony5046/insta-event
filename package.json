@@ -9,9 +9,6 @@
   },
   "dependencies": {
     "express": "^4.21.0",
-    "googleapis": "^171.4.0",
-    "instagram-private-api": "^1.46.1",
-    "multer": "^2.1.1",
-    "node-cron": "^3.0.3"
+    "multer": "^2.1.1"
   }
 }
