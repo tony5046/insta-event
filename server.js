@@ -119,10 +119,16 @@ function _igFetch(url, sessionIdOrCookies) {
       res.on('end', () => {
         if (res.statusCode === 302 || res.statusCode === 301) {
           const location = res.headers.location || '';
-          if (location.includes('/accounts/login')) {
+          console.log(`[IG 리다이렉트] ${res.statusCode} → ${location.substring(0, 200)}`);
+          if (location.includes('/accounts/login') || location.includes('/login')) {
             reject(new Error('세션 ID가 만료되었습니다. 브라우저에서 인스타그램에 다시 로그인 후 새 sessionid를 복사해주세요.'));
+          } else if (location.startsWith('http') || location.startsWith('/')) {
+            // 다른 URL로 리다이렉트 시 한 번 따라가기
+            const followUrl = location.startsWith('http') ? location : `https://${parsedUrl.hostname}${location}`;
+            console.log(`[IG 리다이렉트 추적] ${followUrl.substring(0, 100)}`);
+            _igFetch(followUrl, sessionIdOrCookies).then(resolve).catch(reject);
           } else {
-            reject(new Error(`Instagram 리다이렉트 (${res.statusCode})`));
+            reject(new Error(`Instagram 리다이렉트 (${res.statusCode}): ${location.substring(0, 100)}`));
           }
           return;
         }
