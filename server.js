@@ -67,10 +67,10 @@ function shortcodeToMediaId(shortcode) {
 }
 
 // === Instagram API 요청 헬퍼 (재시도 포함) ===
-async function igRequest(url, sessionId, retries = 3) {
+async function igRequest(url, sessionIdOrCookies, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const result = await _igFetch(url, sessionId);
+      const result = await _igFetch(url, sessionIdOrCookies);
       return result;
     } catch (err) {
       console.log(`[시도 ${attempt}/${retries}] ${err.message}`);
@@ -83,7 +83,14 @@ async function igRequest(url, sessionId, retries = 3) {
   }
 }
 
-function _igFetch(url, sessionId) {
+function _igFetch(url, sessionIdOrCookies) {
+  // 전체 쿠키 문자열인 경우(=가 포함됨) 그대로, 아니면 sessionid 형식으로
+  const cookieHeader = sessionIdOrCookies.includes('=')
+    ? sessionIdOrCookies
+    : `sessionid=${sessionIdOrCookies}`;
+  const csrfMatch = cookieHeader.match(/csrftoken=([^;]+)/);
+  const csrfToken = csrfMatch ? csrfMatch[1] : '';
+
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
     const options = {
@@ -92,7 +99,8 @@ function _igFetch(url, sessionId) {
       method: 'GET',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-        'Cookie': `sessionid=${sessionId}`,
+        'Cookie': cookieHeader,
+        ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
         'X-IG-App-ID': '936619743392459',
         'X-Requested-With': 'XMLHttpRequest',
         'X-ASBD-ID': '129477',
@@ -178,7 +186,7 @@ app.get('/api/comments/stream', (req, res) => {
 
 app.post('/api/comments', async (req, res) => {
   try {
-    const { postUrl, sessionId } = req.body;
+    const { postUrl, sessionId, username } = req.body;
 
     if (!postUrl || !sessionId) {
       return res.status(400).json({ error: '게시물 URL과 세션 ID가 필요합니다.' });
@@ -187,6 +195,17 @@ app.post('/api/comments', async (req, res) => {
     const cleanSessionId = sessionId.replace(/[\s"';\r\n\t]+/g, '').trim();
     if (!cleanSessionId) {
       return res.status(400).json({ error: '유효하지 않은 세션 ID입니다.' });
+    }
+
+    // username이 있으면 해당 계정의 전체 쿠키 사용 (302 리다이렉트 방지)
+    let authValue = cleanSessionId;
+    if (username) {
+      const accounts = loadAccounts();
+      const acc = accounts.find(a => a.username === username);
+      if (acc && acc.cookies) {
+        authValue = acc.cookies;
+        console.log(`[댓글 수집] ${username} 계정의 전체 쿠키 사용`);
+      }
     }
 
     const shortcode = extractShortcode(postUrl);
@@ -205,7 +224,7 @@ app.post('/api/comments', async (req, res) => {
     res.json({ jobId, mediaId });
 
     // 백그라운드에서 댓글 수집 시작
-    fetchAllCommentsWithProgress(mediaId, cleanSessionId, jobId);
+    fetchAllCommentsWithProgress(mediaId, authValue, jobId);
   } catch (err) {
     console.error('[오류]', err.message);
     res.status(500).json({ error: err.message });

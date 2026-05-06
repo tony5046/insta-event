@@ -137,12 +137,15 @@ async function loginAndGetCookies(username, password) {
   return { success: false, error: `로그인 실패: ${result.status} ${JSON.stringify(result.data).substring(0, 200)}` };
 }
 
-async function updateRailwayAccount(username, cookies, apiBase) {
+function updateAccount(username, cookies, apiBase) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({ username, label: '', cookies });
     const url = new URL(apiBase + '/api/auto/accounts/save');
-    const req = https.request({
+    const isHttps = url.protocol === 'https:';
+    const lib = isHttps ? https : require('http');
+    const req = lib.request({
       hostname: url.hostname,
+      port: url.port || (isHttps ? 443 : 80),
       path: url.pathname,
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
@@ -165,15 +168,19 @@ async function updateRailwayAccount(username, cookies, apiBase) {
     console.error('login-credentials.json 파일이 없습니다');
     process.exit(1);
   }
-  const { accounts, apiBase } = JSON.parse(fs.readFileSync(credFile, 'utf8'));
+  const config = JSON.parse(fs.readFileSync(credFile, 'utf8'));
+  // apiBases 배열 지원 (로컬 + Railway 동시 업데이트)
+  const apiBases = config.apiBases || [config.apiBase || 'http://localhost:3000'];
 
-  for (const { username, password } of accounts) {
+  for (const { username, password } of config.accounts) {
     try {
       const result = await loginAndGetCookies(username, password);
       if (result.success) {
-        console.log(`[${username}] Railway 업데이트 중...`);
-        const upd = await updateRailwayAccount(username, result.cookies, apiBase);
-        console.log(`[${username}] → ${upd.status}: ${upd.data}`);
+        for (const apiBase of apiBases) {
+          console.log(`[${username}] ${apiBase} 업데이트 중...`);
+          const upd = await updateAccount(username, result.cookies, apiBase);
+          console.log(`[${username}] ${apiBase} → ${upd.status}: ${upd.data}`);
+        }
       } else {
         console.log(`[${username}] ❌ ${result.error}`);
       }

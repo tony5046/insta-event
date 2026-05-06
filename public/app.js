@@ -165,7 +165,7 @@ fetchBtn.addEventListener('click', async () => {
     const res = await fetch('/api/comments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postUrl, sessionId }),
+      body: JSON.stringify({ postUrl, sessionId, username: accountSelect.value }),
     });
 
     const data = await res.json();
