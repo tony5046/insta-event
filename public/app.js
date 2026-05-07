@@ -37,7 +37,6 @@ const excludeRecentCheck = document.getElementById('excludeRecent');
 const excludeDaysSelect = document.getElementById('excludeDays');
 const recentCountBadge = document.getElementById('recentCountBadge');
 const verifySellerNameEl = document.getElementById('verifySellerName');
-const uploadAccountNameEl = document.getElementById('uploadAccountName');
 
 // 탭 전환
 document.querySelectorAll('.tab').forEach(tab => {
@@ -524,8 +523,6 @@ drawBtn.addEventListener('click', async () => {
 
     renderWinners(lastWinnersWithPrizes);
     resultSection.style.display = 'block';
-    postSection.style.display = 'block';
-    generateCaption();
     resultSection.scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
     console.error(err);
@@ -691,8 +688,7 @@ saveToSheetBtn.addEventListener('click', async () => {
   }
 });
 
-// === 4단계: Instagram 게시물 업로드 ===
-const postSection = document.getElementById('postSection');
+// === 계정 관리 ===
 const accountSelect = document.getElementById('accountSelect');
 const loginStatusBadge = document.getElementById('loginStatusBadge');
 const accountForm = document.getElementById('accountForm');
@@ -703,15 +699,6 @@ const igLabelInput = document.getElementById('igLabel');
 const igCookiesInput = document.getElementById('igCookies');
 const saveAccountBtn = document.getElementById('saveAccountBtn');
 const loginStatus = document.getElementById('loginStatus');
-const captionTitle = document.getElementById('captionTitle');
-const captionDeadline = document.getElementById('captionDeadline');
-const captionPreview = document.getElementById('captionPreview');
-const refreshCaptionBtn = document.getElementById('refreshCaptionBtn');
-const copyCaptionBtn = document.getElementById('copyCaptionBtn');
-const postImageInput = document.getElementById('postImage');
-const imagePreview = document.getElementById('imagePreview');
-const publishBtn = document.getElementById('publishBtn');
-const publishStatus = document.getElementById('publishStatus');
 
 // 계정 목록 데이터 (별칭 조회용)
 let accountsData = [];
@@ -764,7 +751,6 @@ function updateAccountBadge() {
     : '(1단계에서 계정을 선택하세요)';
 
   if (verifySellerNameEl) verifySellerNameEl.textContent = verifyDisplay;
-  if (uploadAccountNameEl) uploadAccountNameEl.textContent = display;
 }
 
 accountSelect.addEventListener('change', () => {
@@ -842,122 +828,6 @@ deleteAccountBtn.addEventListener('click', async () => {
   updateAccountBadge();
 });
 
-// 캡션 자동 생성
-function generateCaption() {
-  const title = captionTitle.value.trim() || '{마켓명 이벤트}';
-  const deadline = captionDeadline.value.trim() || '{답변 기한}';
-  const prizes = getPrizes();
-
-  // 증정품별 당첨자 그룹화
-  const prizeGroups = {};
-  lastWinnersWithPrizes.forEach(w => {
-    const key = w.prize || '미지정';
-    if (!prizeGroups[key]) prizeGroups[key] = [];
-    prizeGroups[key].push(w.username);
-  });
-
-  let caption = `✨${title} 당첨자 발표\n\n`;
-  caption += `이벤트에 참여해주신 모든 분들께 진심으로 감사드립니다! 당첨되신 분들께는 개별 DM으로 안내드릴 예정입니다.\n\n`;
-
-  // 증정품별 블록
-  for (const [prizeName, users] of Object.entries(prizeGroups)) {
-    const prizeInfo = prizes.find(p => p.name === prizeName);
-    const eventDesc = '구매완료 댓글 이벤트';
-    caption += `✔️${eventDesc} ${users.length}명 : ${prizeName} 증정\n`;
-    users.forEach(u => {
-      caption += `@${u}\n`;
-    });
-    caption += `\n`;
-  }
-
-  caption += `⚠️ 새로운 사람의 메시지를 요청하지 않는 경우\n`;
-  caption += `팀 계정 메시지를 보실 수 없습니다!\n`;
-  caption += `꼭 팔로우 후 DM 허용 해주세요\n\n`;
-  caption += `📮 이벤트 답변 기한 : ${deadline}\n`;
-  caption += `기한 내 DM 답변이 오시지 않는 경우, 당첨이 무효 처리 되는 점 미리 안내드립니다! 꼭 기한 내 답변 부탁드립니다 🥰\n\n`;
-  caption += `다시 한 번 당첨을 축하드리며\n`;
-  caption += `앞으로도 더 좋은 마켓으로 찾아뵙겠습니다 🤍\n`;
-  caption += `감사합니다.`;
-
-  captionPreview.value = caption;
-  return caption;
-}
-
-// 캡션 관련 이벤트
-captionTitle.addEventListener('input', generateCaption);
-captionDeadline.addEventListener('input', generateCaption);
-refreshCaptionBtn.addEventListener('click', generateCaption);
-
-copyCaptionBtn.addEventListener('click', () => {
-  const text = captionPreview.value;
-  copyToClipboard(text);
-});
-
-// 이미지 미리보기
-postImageInput.addEventListener('change', () => {
-  const file = postImageInput.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      imagePreview.innerHTML = `<img src="${e.target.result}" alt="미리보기">`;
-    };
-    reader.readAsDataURL(file);
-  } else {
-    imagePreview.innerHTML = '';
-  }
-});
-
-// 게시물 업로드
-publishBtn.addEventListener('click', async () => {
-  const username = accountSelect.value;
-  const caption = captionPreview.value;
-  const imageFile = postImageInput.files[0];
-
-  if (!username) {
-    publishStatus.textContent = '계정을 선택해주세요.';
-    publishStatus.className = 'status error';
-    return;
-  }
-  if (!imageFile) {
-    publishStatus.textContent = '이미지를 선택해주세요.';
-    publishStatus.className = 'status error';
-    return;
-  }
-  if (!caption) {
-    publishStatus.textContent = '캡션이 비어있습니다.';
-    publishStatus.className = 'status error';
-    return;
-  }
-
-  if (!confirm(`${username} 계정으로 게시물을 업로드하시겠습니까?`)) return;
-
-  publishBtn.disabled = true;
-  publishStatus.textContent = '게시물 업로드 중...';
-  publishStatus.className = 'status loading';
-
-  try {
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('caption', caption);
-    formData.append('image', imageFile);
-
-    const res = await fetch('/api/ig/post', {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.error);
-
-    publishStatus.innerHTML = `게시물 업로드 완료! <a href="${data.url}" target="_blank">${data.url}</a>`;
-    publishStatus.className = 'status success';
-  } catch (err) {
-    publishStatus.textContent = err.message;
-    publishStatus.className = 'status error';
-  } finally {
-    publishBtn.disabled = false;
-  }
-});
 
 // 페이지 로드 시 계정 목록 불러오기
 loadAccountList();

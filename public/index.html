@@ -17,7 +17,7 @@
     <section class="card">
       <h2>1. Instagram 계정 선택</h2>
       <p class="hint" style="margin-bottom:12px;">
-        선택한 계정이 <strong>팔로워 검증 · 시트 탭 · 게시물 업로드</strong>의 기준이 됩니다.
+        선택한 계정이 <strong>팔로워 검증 · 시트 탭</strong>의 기준이 됩니다.
       </p>
 
       <div class="form-group">
@@ -211,47 +211,6 @@
       <div id="commentList" class="comment-list"></div>
     </section>
 
-    <!-- 5단계: Instagram 게시물 업로드 -->
-    <section class="card" id="postSection" style="display:none;">
-      <h2>5. 당첨자 발표 게시물 업로드</h2>
-      <p class="hint" style="margin-bottom:12px;">
-        업로드 계정: <strong id="uploadAccountName">(1단계에서 선택한 계정)</strong>
-      </p>
-
-      <!-- 캡션 설정 -->
-      <div class="form-group">
-        <label>캡션 설정</label>
-        <div class="caption-fields">
-          <div class="form-group">
-            <label for="captionTitle">제목 (마켓명 + 이벤트 설명)</label>
-            <input type="text" id="captionTitle" placeholder="예: 테코야 이벤트">
-          </div>
-          <div class="form-group">
-            <label for="captionDeadline">DM 답변 기한</label>
-            <input type="text" id="captionDeadline" placeholder="예: 4월 20일">
-          </div>
-        </div>
-        <p class="hint">증정품/당첨자는 추첨 결과에서 자동으로 채워집니다.</p>
-      </div>
-
-      <!-- 캡션 미리보기 (직접 수정 가능) -->
-      <div class="form-group">
-        <label>캡션 미리보기 (직접 편집 가능)</label>
-        <textarea id="captionPreview" class="caption-preview" rows="18" placeholder="추첨 결과가 나오면 자동 생성됩니다. 자유롭게 수정하세요."></textarea>
-        <button id="refreshCaptionBtn" class="btn btn-secondary btn-sm">기본 양식으로 재생성</button>
-        <button id="copyCaptionBtn" class="btn btn-secondary btn-sm">캡션 복사</button>
-      </div>
-
-      <!-- 이미지 업로드 -->
-      <div class="form-group">
-        <label for="postImage">게시물 이미지</label>
-        <input type="file" id="postImage" accept="image/*" class="file-input">
-        <div id="imagePreview" class="image-preview"></div>
-      </div>
-
-      <button id="publishBtn" class="btn btn-accent">Instagram에 게시하기</button>
-      <p id="publishStatus" class="status"></p>
-    </section>
   </div>
 
   <script src="app.js"></script>
