@@ -847,14 +847,23 @@ function loadAccounts() {
     if (fs.existsSync(ACCOUNTS_FILE)) {
       return JSON.parse(fs.readFileSync(ACCOUNTS_FILE, 'utf8'));
     }
-    // Railway 등 클라우드: 환경변수에서 초기 데이터 로드
+    // 환경변수에서 로드 (배포용)
     if (process.env.ACCOUNTS_JSON) {
       const accounts = JSON.parse(process.env.ACCOUNTS_JSON);
-      // 파일로 저장해서 이후 수정 가능하게
       fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2));
       return accounts;
     }
-  } catch {}
+    // 기본계정.json 자동 로드 (Render/Vercel 등 클라우드 첫 실행 시)
+    const defaultFile = path.join(__dirname, '기본계정.json');
+    if (fs.existsSync(defaultFile)) {
+      const accounts = JSON.parse(fs.readFileSync(defaultFile, 'utf8'));
+      try { fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2)); } catch {}
+      console.log(`[계정] 기본계정.json에서 ${accounts.length}개 자동 로드`);
+      return accounts;
+    }
+  } catch (err) {
+    console.error('[계정 로드 오류]', err.message);
+  }
   return [];
 }
 
