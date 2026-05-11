@@ -853,12 +853,12 @@ function loadAccounts() {
       fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2));
       return accounts;
     }
-    // 기본계정.json 자동 로드 (Render/Vercel 등 클라우드 첫 실행 시)
-    const defaultFile = path.join(__dirname, '기본계정.json');
+    // default-accounts.json 자동 로드 (Render/Vercel 등 클라우드 첫 실행 시)
+    const defaultFile = path.join(__dirname, 'default-accounts.json');
     if (fs.existsSync(defaultFile)) {
       const accounts = JSON.parse(fs.readFileSync(defaultFile, 'utf8'));
       try { fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2)); } catch {}
-      console.log(`[계정] 기본계정.json에서 ${accounts.length}개 자동 로드`);
+      console.log(`[계정] default-accounts.json에서 ${accounts.length}개 자동 로드`);
       return accounts;
     }
   } catch (err) {

@@ -24,8 +24,8 @@ if not exist node_modules (
 
 REM 계정 자동 등록 (최초 1회)
 if not exist accounts.json (
-  if exist 기본계정.json (
-    copy "기본계정.json" accounts.json >nul
+  if exist default-accounts.json (
+    copy "default-accounts.json" accounts.json >nul
     echo ✅ 계정 5개 자동 등록 완료
   )
 )

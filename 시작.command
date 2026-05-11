@@ -31,8 +31,8 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # 4. 계정 자동 등록 (최초 1회)
-if [ ! -f "accounts.json" ] && [ -f "기본계정.json" ]; then
-  cp "기본계정.json" accounts.json
+if [ ! -f "accounts.json" ] && [ -f "default-accounts.json" ]; then
+  cp "default-accounts.json" accounts.json
   echo "✅ 계정 5개 자동 등록 완료"
 fi
 
