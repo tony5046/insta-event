@@ -3,12 +3,9 @@ services:
     name: insta-event
     runtime: node
     plan: free
+    region: singapore
     buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
         value: 20
-      - key: ACCOUNTS_JSON
-        sync: false
-      - key: SHARED_CONFIG_JSON
-        sync: false
