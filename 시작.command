@@ -1,5 +1,5 @@
 #!/bin/bash
-# 더블클릭으로 실행 - 인스타 이벤트 추첨 도구
+# 맥북 더블클릭 실행
 
 cd "$(dirname "$0")"
 
@@ -18,22 +18,27 @@ if ! command -v brew &> /dev/null; then
   fi
 fi
 
-# 2. Node.js 자동 설치 (없으면)
+# 2. Node.js 자동 설치
 if ! command -v node &> /dev/null; then
   echo "📦 Node.js 설치 중..."
   brew install node
 fi
 
-# 3. 패키지 자동 설치 (없으면)
+# 3. 패키지 자동 설치
 if [ ! -d "node_modules" ]; then
   echo "📦 라이브러리 설치 중..."
   npm install --silent
 fi
 
-# 4. 3초 후 자동으로 브라우저 열기
+# 4. 계정 자동 등록 (최초 1회)
+if [ ! -f "accounts.json" ] && [ -f "기본계정.json" ]; then
+  cp "기본계정.json" accounts.json
+  echo "✅ 계정 5개 자동 등록 완료"
+fi
+
+# 5. 3초 후 브라우저 자동 열기
 (sleep 3 && open http://localhost:3000) &
 
-# 5. 서버 실행
 echo ""
 echo "✅ 준비 완료! 브라우저가 자동으로 열립니다."
 echo "   끄려면 이 창 닫거나 Ctrl+C"
