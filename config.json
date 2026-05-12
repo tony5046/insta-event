@@ -1,0 +1,59 @@
+{
+  "influencers": [
+    {
+      "name": "셀러A",
+      "post_url": "",
+      "schedule": {
+        "day": "friday",
+        "time": "10:00"
+      },
+      "winners": 5,
+      "google_sheet_id": "",
+      "slack_channel": "#셀러a-이벤트"
+    },
+    {
+      "name": "셀러B",
+      "post_url": "",
+      "schedule": {
+        "day": "tuesday",
+        "time": "10:00"
+      },
+      "winners": 10,
+      "google_sheet_id": "",
+      "slack_channel": "#셀러b-이벤트"
+    },
+    {
+      "name": "셀러C",
+      "post_url": "",
+      "schedule": {
+        "day": "wednesday",
+        "time": "10:00"
+      },
+      "winners": 5,
+      "google_sheet_id": "",
+      "slack_channel": "#셀러c-이벤트"
+    },
+    {
+      "name": "셀러D",
+      "post_url": "",
+      "schedule": {
+        "day": "thursday",
+        "time": "10:00"
+      },
+      "winners": 5,
+      "google_sheet_id": "",
+      "slack_channel": "#셀러d-이벤트"
+    },
+    {
+      "name": "셀러E",
+      "post_url": "",
+      "schedule": {
+        "day": "monday",
+        "time": "10:00"
+      },
+      "winners": 5,
+      "google_sheet_id": "",
+      "slack_channel": "#셀러e-이벤트"
+    }
+  ]
+}
