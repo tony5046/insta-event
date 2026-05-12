@@ -461,10 +461,8 @@ app.post('/api/ig/check-followers', async (req, res) => {
       return res.status(401).json({ error: `${teamUsername} 계정의 쿠키가 등록되어 있지 않습니다.` });
     }
 
-    const influencerUsername = teamAccount.influencerUsername;
-    if (!influencerUsername) {
-      return res.status(400).json({ error: `${teamUsername} 계정에 셀러 본 계정 아이디가 설정되어 있지 않습니다. 계정을 다시 등록해주세요.` });
-    }
+    // influencerUsername이 비어있으면 계정 자체를 셀러 본 계정으로 간주
+    const influencerUsername = teamAccount.influencerUsername || teamAccount.username;
 
     console.log(`[팔로워 검증] 팀: ${teamUsername} → 셀러 본 계정: ${influencerUsername}`);
 
